@@ -1,12 +1,12 @@
-0993038ee4545ce861dbb84b2b609b23 *DESCRIPTION
+214184f8edef701fa912b3cbee483bf1 *DESCRIPTION
 2e1851201d1b8e3ead7c031470dfd602 *NAMESPACE
-bc730c1b2d91681511fde0bf523d25d7 *R/NBBDesigns.R
+d87df3f6b84f77a1014fc6247d96cd91 *R/NBBDesigns.R
 0e1e3f4a6c7e5857675164b9538451f6 *data/sample_data.RData
 d1442e7b91893a275d4a16f14b22fa47 *data/sample_data.rda
 560cca00ec30244b2b6ebbe07727dce2 *man/anlys.Rd
 37044038ea03912992ddfcdf56f3258a *man/nbbd1.Rd
-6f90b9ae9f8c1db806f0f0f03e724fe0 *man/nbbd2.Rd
+211778f3e4079519e2607d496958e0f0 *man/nbbd2.Rd
 ae3a080f7ba33ddf91373dce00403a8a *man/nbbd3.Rd
 9983cfe3e07fdc8368e50c8c645c7552 *man/pnbbd1.Rd
-967bee8f583bb115252cf999e95c573b *man/pnbbd2.Rd
+bd3ae34277de2cf457fb440bc1ae0761 *man/pnbbd2.Rd
 ddcda3decf51e9153fbed1ca1062ba72 *man/sample_data.Rd

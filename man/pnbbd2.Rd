@@ -7,7 +7,7 @@
 pnbbd2(v)
 }
 \arguments{
-\item{v}{Number of treatments (v), v should be a prime number}
+\item{v}{Number of treatments (v>5), v should be a prime number}
 }
 \value{
 It gives Partially Neighbour Balanced Block Designs for v, when v is any prime number.

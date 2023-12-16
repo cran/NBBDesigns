@@ -15,6 +15,24 @@
 #' nbbd1(5)
 #'
 nbbd1<-function(v){
+  Moore_penrose_inverse_mine<-function(matrix){
+    N<-as.matrix(matrix)
+    NtN<-t(N)%*%N
+    NNt<-N%*%t(N)
+    eig_val<-eigen(NtN)$values
+    positive<-NULL
+    for(i in eig_val){
+      if(i>10^-7){
+        positive<-c(positive,TRUE)
+      }else{
+        positive<-c(positive,FALSE)
+      }
+    }
+    sigma<-1/sqrt(eig_val[eig_val>10^-7])
+    u<-eigen(NtN)$vectors[,positive,drop=FALSE]
+    v<-eigen(NNt)$vectors[,positive,drop=FALSE]
+    return(u%*%diag(sigma,nrow(t(v)))%*%t(v))
+  }
   v= #Number of treatments
     np<-v
 
@@ -48,23 +66,24 @@ nbbd1<-function(v){
     c1<-matrix("|",nrow=v-1,ncol=1)
     x1<-cbind(x1[,v],c1,x1,c1,x1[,1])
 
-    print("NBBD with left and right border plots", quote=FALSE)
+    message("NBBD with left and right border plots")
     prmatrix(x1,rowlab=rep("",v-1),collab=rep("",v+4), quote = FALSE)
     #number_of_blocks
+    cat("\n")
     b<-(v-1)
 
-    print(c("Number of blocks",b), quote = FALSE)
+    #print(c("Number of blocks",b), quote = FALSE)
     #number_of_replication
     r<-v-1
-    print(c("Number of replications",r), quote = FALSE)
+    #print(c("Number of replications",r), quote = FALSE)
     #number_of_treatments
-    print(c("Number of treatments",v), quote = FALSE)
+    #print(c("Number of treatments",v), quote = FALSE)
     # block_size
     k<-v
-    print(c("Block size",k), quote = FALSE)
+    #print(c("Block size",k), quote = FALSE)
     #both_side_neighbour_appears
     u<-1
-    print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
+    #print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
 
     ##################
 
@@ -135,27 +154,20 @@ nbbd1<-function(v){
     x2_prime_x2<-t(x2_mat)%*% x2_mat
 
     #########################
-
-
-
-
-
     #joint C matrix
-    Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%MASS::ginv(x2_prime_x2)%*%(t(x1_prime_x2))
+    Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%Moore_penrose_inverse_mine(x2_prime_x2)%*%(t(x1_prime_x2))
     Cmatrix<-round(Cmatrix,digits = 3)
     #print("Joint C matrix", quote=FALSE)
     #print(Cmatrix)
-
-
     #The information matrix for estimating the direct effects of treatments
     c11<-Cmatrix[c(1:v),c(1:v)]
     c12<-Cmatrix[c(1:v),c((v+1):(3*v))]
     c21<-t(c12)
     c22<-Cmatrix[c((v+1):(3*v)),c((v+1):(3*v))]
 
-    C_tau<-c11-c12%*%MASS::ginv(c22)%*%c21
-    print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
-    print(round(C_tau,digits = 3))
+    C_tau<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    #print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
+    #print(round(C_tau,digits = 3))
     #The information matrix for estimating the left neighbour effects of treatments
 
     c11<-Cmatrix[c((v+1):(2*v)),c((v+1):(2*v))]
@@ -170,25 +182,26 @@ nbbd1<-function(v){
     c225<-cbind(c221,c222)
     c226<-cbind(c223,c224)
     c22<-rbind(c225,c226)
-    C_ro<-c11-c12%*%MASS::ginv(c22)%*%c21
-    print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
-    print(round(C_ro,digits = 3))
+    C_ro<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    #print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
+    #print(round(C_ro,digits = 3))
     #The information matrix for estimating the right neighbour effects of treatments
     c11<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
     c12<-Cmatrix[c(((2*v)+1):(3*v)),c(1:(2*v))]
     c21<-t(c12)
     c22<-Cmatrix[c(1:(2*v)),c(1:(2*v))]
 
-    C_del<-c11-c12%*%MASS::ginv(c22)%*%c21
-    print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
-    print(round(C_del,digits = 3))
-
+    C_del<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    #print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
+    #print(round(C_del,digits = 3))
+    list1<-list("Number of treatments"=v,"Number of replications"=r,"Number of blocks"=b,"Block size"=k," Number of times each treatment appearing as both left and right neighbour to each other treatments"=u,"The information matrix for estimating the contrast pertaining to the direct effects of treatments"=round(C_tau,digits = 3),"The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments"=round(C_ro,digits = 3),"The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments"=round(C_del,digits = 3))
+    return(list1)
   }else{
     print("Please enter a correct value",quote=FALSE)
   }
 }
 
-
+#nbbd1(5)
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -202,9 +215,26 @@ nbbd1<-function(v){
 #'@references Azais, J.M., Bailey, R.A. and Monod, H. (1993)<DOI: 10.2307/2532269>."A catalogue of efficient neighbour designs with border plots".
 #' @examples
 #' library(NBBDesigns)
-#' nbbd2(9)
+#' nbbd2(7)
 nbbd2<-function(v){
-
+  Moore_penrose_inverse_mine<-function(matrix){
+    N<-as.matrix(matrix)
+    NtN<-t(N)%*%N
+    NNt<-N%*%t(N)
+    eig_val<-eigen(NtN)$values
+    positive<-NULL
+    for(i in eig_val){
+      if(i>10^-7){
+        positive<-c(positive,TRUE)
+      }else{
+        positive<-c(positive,FALSE)
+      }
+    }
+    sigma<-1/sqrt(eig_val[eig_val>10^-7])
+    u<-eigen(NtN)$vectors[,positive,drop=FALSE]
+    v<-eigen(NNt)$vectors[,positive,drop=FALSE]
+    return(u%*%diag(sigma,nrow(t(v)))%*%t(v))
+  }
   type=2 #type of design
   m<-((v-1)/2)
   k=0
@@ -244,32 +274,27 @@ nbbd2<-function(v){
       matt<-mat
       c1<-matrix("|",nrow=v,ncol=1)
       mat<-cbind(mat[,(v-1)],c1,mat,c1,mat[,1])
-      print("NBBD with left and right border plots", quote=FALSE)
+      message("NBBD with left and right border plots")
       prmatrix(mat,rowlab=rep("",v),collab=rep("",(v-1)+4), quote = FALSE)
-
       #break
-
       b<-v
 
-      print(c("Number of blocks",b), quote = FALSE)
+      #print(c("Number of blocks",b), quote = FALSE)
       #number_of_replication
       r<-v-1
-      print(c("Number of replications",r), quote = FALSE)
+      #print(c("Number of replications",r), quote = FALSE)
       #number_of_treatments
-      print(c("Number of treatments",v), quote = FALSE)
+      #print(c("Number of treatments",v), quote = FALSE)
       # block_size
       k<-v-1
-      print(c("Block size",k), quote = FALSE)
+      #print(c("Block size",k), quote = FALSE)
       #both_side_neighbour_appears
       u<-1
-      print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
-
-      print("The final designs are neighbour-balanced at distance 2 when v is prime, as shown by Lawless (1971) and Keedwell (1984).",quote = FALSE)
+      cat("\n")
+      #print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
+      message("Note: The final designs are neighbour-balanced at distance 2 when v is prime, as shown by Lawless (1971) and Keedwell (1984).")
 
       ################################
-
-
-
       mat1<-matt
       mat2<-cbind(mat1[,ncol(mat1)],mat1[,c(1:(ncol(mat1)-1))])
       mat3<-cbind(mat1[,c(2:(ncol(mat1)),1)])
@@ -344,11 +369,8 @@ nbbd2<-function(v){
       x2_prime_x2<-t(x2_mat)%*% x2_mat
 
       #########################
-
-
-
       #joint C matrix
-      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%MASS::ginv(x2_prime_x2)%*%(t(x1_prime_x2))
+      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%Moore_penrose_inverse_mine(x2_prime_x2)%*%(t(x1_prime_x2))
       Cmatrix<-round(Cmatrix,digits = 3)
       #print("Joint C matrix", quote=FALSE)
       #print(Cmatrix)
@@ -360,9 +382,9 @@ nbbd2<-function(v){
       c21<-t(c12)
       c22<-Cmatrix[c((v+1):(3*v)),c((v+1):(3*v))]
 
-      C_tau<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
-      print(round(C_tau,digits = 3))
+      C_tau<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
+      #print(round(C_tau,digits = 3))
       #The information matrix for estimating the left neighbour effects of treatments
 
       c11<-Cmatrix[c((v+1):(2*v)),c((v+1):(2*v))]
@@ -377,24 +399,25 @@ nbbd2<-function(v){
       c225<-cbind(c221,c222)
       c226<-cbind(c223,c224)
       c22<-rbind(c225,c226)
-      C_ro<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
-      print(round(C_ro,digits = 3))
+      C_ro<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
+      #print(round(C_ro,digits = 3))
       #The information matrix for estimating the right neighbour effects of treatments
       c11<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
       c12<-Cmatrix[c(((2*v)+1):(3*v)),c(1:(2*v))]
       c21<-t(c12)
       c22<-Cmatrix[c(1:(2*v)),c(1:(2*v))]
 
-      C_del<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
-      print(round(C_del,digits = 3))
-
+      C_del<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
+      # print(round(C_del,digits = 3))
+      list1<-list("Number of treatments"=v,"Number of replications"=r,"Number of blocks"=b,"Block size"=k," Number of times each treatment appearing as both left and right neighbour to each other treatments"=u,"The information matrix for estimating the contrast pertaining to the direct effects of treatments"=round(C_tau,digits = 3),"The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments"=round(C_ro,digits = 3),"The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments"=round(C_del,digits = 3))
+      return(list1)
     }else{
       print(" Plese enter a correct value",quote=FALSE)
     }
 }
-
+#nbbd2(7)
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -409,7 +432,24 @@ nbbd2<-function(v){
 #' library(NBBDesigns)
 #' nbbd3(6)
 nbbd3<-function(v){
-
+  Moore_penrose_inverse_mine<-function(matrix){
+    N<-as.matrix(matrix)
+    NtN<-t(N)%*%N
+    NNt<-N%*%t(N)
+    eig_val<-eigen(NtN)$values
+    positive<-NULL
+    for(i in eig_val){
+      if(i>10^-7){
+        positive<-c(positive,TRUE)
+      }else{
+        positive<-c(positive,FALSE)
+      }
+    }
+    sigma<-1/sqrt(eig_val[eig_val>10^-7])
+    u<-eigen(NtN)$vectors[,positive,drop=FALSE]
+    v<-eigen(NNt)$vectors[,positive,drop=FALSE]
+    return(u%*%diag(sigma,nrow(t(v)))%*%t(v))
+  }
   vv=v-1
   type=2
   m<-((vv-1)/2)
@@ -466,29 +506,22 @@ nbbd3<-function(v){
       c1<-matrix("|",nrow=v,ncol=1)
       mat3<-cbind(mat3[,vv],c1,mat3,c1,mat3[,1])
 
-      print("NBBD with left and right border plots", quote=FALSE)
+      message("NBBD with left and right border plots")
       prmatrix(mat3,rowlab=rep("",v),collab=rep("",(v-1)+4), quote = FALSE)
-
-
       b<-v
-
-
-      print(c("Number of blocks",b), quote = FALSE)
+      #print(c("Number of blocks",b), quote = FALSE)
       #number_of_replication
       r<-v-1
-      print(c("Number of replications",r), quote = FALSE)
+      #print(c("Number of replications",r), quote = FALSE)
       #number_of_treatments
-      print(c("Number of treatments",v), quote = FALSE)
+      #print(c("Number of treatments",v), quote = FALSE)
       # block_size
       k<-v-1
-      print(c("Block size",k), quote = FALSE)
+      #print(c("Block size",k), quote = FALSE)
       #both_side_neighbour_appears
       u<-1
-      print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
-
-
-
-
+      #print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
+      cat("\n")
       mat1<-matt
       mat2<-cbind(mat1[,ncol(mat1)],mat1[,c(1:(ncol(mat1)-1))])
       mat3<-cbind(mat1[,c(2:(ncol(mat1)),1)])
@@ -567,9 +600,9 @@ nbbd3<-function(v){
 
       #joint C matrix
 
-      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%MASS::ginv(x2_prime_x2)%*%(t(x1_prime_x2))
+      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%Moore_penrose_inverse_mine(x2_prime_x2)%*%(t(x1_prime_x2))
       Cmatrix<-round(Cmatrix,digits = 3)
-     # print("Joint C matrix", quote=FALSE)
+      # print("Joint C matrix", quote=FALSE)
       #print(Cmatrix)
 
       ########################
@@ -580,10 +613,10 @@ nbbd3<-function(v){
       c21<-t(c12)
       c22<-Cmatrix[c((vv+1):(3*vv)),c((vv+1):(3*vv))]
 
-      C_tau<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
+      C_tau<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
       #print(C_tau)
-      print(round(C_tau,digits = 3))
+      #print(round(C_tau,digits = 3))
       #The information matrix for estimating the left neighbour effects of treatments
 
       c11<-Cmatrix[c((vv+1):(2*vv)),c((vv+1):(2*vv))]
@@ -598,26 +631,27 @@ nbbd3<-function(v){
       c225<-cbind(c221,c222)
       c226<-cbind(c223,c224)
       c22<-rbind(c225,c226)
-      C_ro<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
+      C_ro<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
       #print(C_ro)
-      print(round(C_ro,digits = 3))
+      #print(round(C_ro,digits = 3))
       #The information matrix for estimating the right neighbour effects of treatments
       c11<-Cmatrix[c(((2*vv)+1):(3*vv)),c(((2*vv)+1):(3*vv))]
       c12<-Cmatrix[c(((2*vv)+1):(3*vv)),c(1:(2*vv))]
       c21<-t(c12)
       c22<-Cmatrix[c(1:(2*vv)),c(1:(2*vv))]
-      print("The information matrix for estimating the contrast pertaining to the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
-      C_del<-c11-c12%*%MASS::ginv(c22)%*%c21
-     # print(C_del)
-      print(round(C_del,digits = 3))
+      #print("The information matrix for estimating the contrast pertaining to the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
+      C_del<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      # print(C_del)
+      #print(round(C_del,digits = 3))
       #######################
-
+      list1<-list("Number of treatments"=v,"Number of replications"=r,"Number of blocks"=b,"Block size"=k," Number of times each treatment appearing as both left and right neighbour to each other treatments"=u,"The information matrix for estimating the contrast pertaining to the direct effects of treatments"=round(C_tau,digits = 3),"The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments"=round(C_ro,digits = 3),"The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments"=round(C_del,digits = 3))
+      return(list1)
     }else{
       print("Please enter a correct value")
     }
 }
-
+#nbbd3(6)
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -634,7 +668,24 @@ nbbd3<-function(v){
 #' library(NBBDesigns)
 #' pnbbd1(8)
 pnbbd1<-function(v){
-
+  Moore_penrose_inverse_mine<-function(matrix){
+    N<-as.matrix(matrix)
+    NtN<-t(N)%*%N
+    NNt<-N%*%t(N)
+    eig_val<-eigen(NtN)$values
+    positive<-NULL
+    for(i in eig_val){
+      if(i>10^-7){
+        positive<-c(positive,TRUE)
+      }else{
+        positive<-c(positive,FALSE)
+      }
+    }
+    sigma<-1/sqrt(eig_val[eig_val>10^-7])
+    u<-eigen(NtN)$vectors[,positive,drop=FALSE]
+    v<-eigen(NNt)$vectors[,positive,drop=FALSE]
+    return(u%*%diag(sigma,nrow(t(v)))%*%t(v))
+  }
   p=((log(v))/log(2))
   type=1
   v=
@@ -663,25 +714,25 @@ pnbbd1<-function(v){
       c1<-matrix("|",nrow=length(x1),ncol=1)
       mat<-cbind(mat[,(v)],c1,mat,c1,mat[,1])
 
-      print("PNBBD with left and right border plots", quote=FALSE)
+      message("PNBBD with left and right border plots")
       prmatrix(mat,rowlab=rep("",v),collab=rep("",(v)+4), quote = FALSE)
-
+      cat("\n")
       b<-(2^(p-1))
 
-      print(c("Number of blocks",b), quote = FALSE)
+      #print(c("Number of blocks",b), quote = FALSE)
       #number_of_replication
       r<-(2^(p-1))
-      print(c("Number of replications",r), quote = FALSE)
+      #print(c("Number of replications",r), quote = FALSE)
       #number_of_treatments
-      print(c("Number of treatments",v), quote = FALSE)
+      #print(c("Number of treatments",v), quote = FALSE)
       # block_size
       k<-v
-      print(c("Block size",k), quote = FALSE)
+      #print(c("Block size",k), quote = FALSE)
       #both_side_neighbour_appears
       u<-1
-      print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
-      print(c(" Number of first associates",(v/2)) ,quote= FALSE)
-      print(c(" Number of second associates",(v/2)-1) ,quote= FALSE)
+      #print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
+      #print(c(" Number of first associates",(v/2)) ,quote= FALSE)
+      #print(c(" Number of second associates",(v/2)-1) ,quote= FALSE)
 
 
       ########################
@@ -765,7 +816,7 @@ pnbbd1<-function(v){
 
       #x2_prime_x2%*%ginv%*%x2_prime_x2
       #joint C matrix
-      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%MASS::ginv(x2_prime_x2)%*%(t(x1_prime_x2))
+      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%Moore_penrose_inverse_mine(x2_prime_x2)%*%(t(x1_prime_x2))
       Cmatrix<-round(Cmatrix,digits = 3)
       #print("Joint C matrix", quote=FALSE)
       #print(Cmatrix)
@@ -777,9 +828,9 @@ pnbbd1<-function(v){
       c21<-t(c12)
       c22<-Cmatrix[c((v+1):(3*v)),c((v+1):(3*v))]
 
-      C_tau<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
-      print(round(C_tau,digits = 3))
+      C_tau<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
+      #print(round(C_tau,digits = 3))
       #The information matrix for estimating the left neighbour effects of treatments
 
       c11<-Cmatrix[c((v+1):(2*v)),c((v+1):(2*v))]
@@ -794,33 +845,30 @@ pnbbd1<-function(v){
       c225<-cbind(c221,c222)
       c226<-cbind(c223,c224)
       c22<-rbind(c225,c226)
-      C_ro<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
-      print(round(C_ro,digits = 3))
+      C_ro<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
+      #print(round(C_ro,digits = 3))
       #The information matrix for estimating the right neighbour effects of treatments
       c11<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
       c12<-Cmatrix[c(((2*v)+1):(3*v)),c(1:(2*v))]
       c21<-t(c12)
       c22<-Cmatrix[c(1:(2*v)),c(1:(2*v))]
 
-      C_del<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
-      print(round(C_del,digits = 3))
-
+      C_del<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+      #print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
+      #print(round(C_del,digits = 3))
+      list1<-list("Number of treatments"=v,"Number of replications"=r,"Number of blocks"=b,"Block size"=k,"Number of first associates"=(v/2)," Number of second associates"=(v/2)-1,"Number of times each treatment appearing as both left and right neighbour to each other treatments"=u,"The information matrix for estimating the contrast pertaining to the direct effects of treatments"=round(C_tau,digits = 3),"The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments"=round(C_ro,digits = 3),"The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments"=round(C_del,digits = 3))
+      return(list1)
 
     }else{
       print(" Plese enter a correct value",quote=FALSE)
     }
 }
-
+#pnbbd1(8)
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-
-
-
 #' PNBB Design of Type 2 (PNBBD 2)
 #'@name pnbbd2
-#' @param v Number of treatments (v), v should be a prime number
+#' @param v Number of treatments (v>5), v should be a prime number
 #'@description
 #'A block design with neighbour effects is said to be partially neighbour balanced based on m-class association scheme if two treatments 'Theta' and 'Phi' that are mutually u-th associates (u = 1, 2,…, m) appear as neighbours (left and right) 'Mu'_1u times. The design so obtained is a ((v-1)/2) associate classes partially variance balanced design following a varying circular association scheme. When v is a prime number, the function will generate a class of partially neighbour balanced block designs. It also gives the parameters of the design, information matrix for estimating the contrast pertaining to direct and neighbour effects (both left and right) of the treatments.
 #' @return It gives Partially Neighbour Balanced Block Designs for v, when v is any prime number.
@@ -831,9 +879,26 @@ pnbbd1<-function(v){
 #' library(NBBDesigns)
 #' pnbbd2(7)
 pnbbd2<-function(v){
+  Moore_penrose_inverse_mine<-function(matrix){
+    N<-as.matrix(matrix)
+    NtN<-t(N)%*%N
+    NNt<-N%*%t(N)
+    eig_val<-eigen(NtN)$values
+    positive<-NULL
+    for(i in eig_val){
+      if(i>10^-7){
+        positive<-c(positive,TRUE)
+      }else{
+        positive<-c(positive,FALSE)
+      }
+    }
+    sigma<-1/sqrt(eig_val[eig_val>10^-7])
+    u<-eigen(NtN)$vectors[,positive,drop=FALSE]
+    v<-eigen(NNt)$vectors[,positive,drop=FALSE]
+    return(u%*%diag(sigma,nrow(t(v)))%*%t(v))
+  }
   p=(v-1)/2
   type=2
-
   i=2
   while(i<=(v/2)){
     if(v%%i!=0){
@@ -843,170 +908,166 @@ pnbbd2<-function(v){
       break
     }
   }
-  v=
-    if(i>v/2 && v>5){
-      #print(c(v, "is prime number"), quote=FALSE)
 
-      x1<-c(p:1)
+  if(i>v/2 && v>5){
+    #print(c(v, "is prime number"), quote=FALSE)
 
-      mat<-matrix(,nrow=0,ncol=v)
-      for(i in x1){
-        x2<-matrix(,nrow=1,ncol=0)
-        x3<-t(seq(0,((i*v)-1), by=i))
-        x2<-cbind(x2,x3)
-        mat<-(rbind((x2),(mat)))
-        i=i+1
-      }
-      mat<-(mat%%v+1)
-      matt<-mat
-      c1<-matrix("|",nrow=length(x1),ncol=1)
-      mat<-cbind(mat[,(v)],c1,mat,c1,mat[,1])
+    x1<-c(p:1)
 
-      print("PNBBD with left and right border plots", quote=FALSE)
-      prmatrix(mat,rowlab=rep("",v),collab=rep("",(v)+4), quote = FALSE)
-      b<-p
-
-      print(c("Number of blocks",b), quote = FALSE)
-      #number_of_replication
-      r<-p
-      print(c("Number of replications",r), quote = FALSE)
-      #number_of_treatments
-      print(c("Number of treatments",v), quote = FALSE)
-      # block_size
-      k<-v
-      print(c("Block size",k), quote = FALSE)
-      #both_side_neighbour_appears
-      # u<-1
-      # print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
-      #
-
-      ###########################
-
-      mat1<-matt
-      mat2<-cbind(mat1[,ncol(mat1)],mat1[,c(1:(ncol(mat1)-1))])
-      mat3<-cbind(mat1[,c(2:(ncol(mat1)),1)])
-      ################################
-      incident1<-matrix(0,nrow=length(mat1), ncol=v)
-
-      i=1
-      while(i<=v){
-        x2<-c(which(t(mat1)==i))
-        for(j in x2){
-          incident1[j,i]<-(incident1[j,i]+1)
-        }
-        i=i+1
-      }
-      #
-      #print(incident1)
-      ################################
-      incident2<-matrix(0,nrow=length(mat1), ncol=v)
-      i=1
-      while(i<=v){
-        x2<-c(which(t(mat2)==i))
-        for(j in x2){
-          incident2[j,i]<-incident2[j,i]+1
-        }
-        i=i+1
-      }
-      #
-
-      #print(incident2)
-      ##############################
-      incident3<-matrix(0,nrow=length(mat1), ncol=v)
-      i=1
-      while(i<=v){
-        x2<-c(which(t(mat3)==i))
-        for(j in x2){
-          incident3[j,i]<-incident3[j,i]+1
-        }
-        i=i+1
-      }
-      #
-
-      #print(incident3)
-      #####################################
-      #############################
-      #D_matrix
-
-      k=1
-      d_mat<-matrix(,nrow=0,ncol=b)
-      while(k<=b){
-        xd<-matrix(,nrow=length(mat1[k,]),ncol=0)
-        id<-matrix(0,nrow=length(mat1[k,]),ncol=b)
-        id[,k]=1
-        xd<-id
-        d_mat<-rbind(d_mat,(xd))
-        #print(d_mat)
-
-        k=k+1
-
-      }
-      #d_mat
-      ###################################
-
-      ##################################
-      x1_mat<-cbind(incident1,incident2,incident3)
-      vec1n<-matrix(1,nrow=nrow(incident3),ncol=1)
-      x2_mat<-cbind(vec1n,d_mat)
-      #################x1 prime x1
-      x1_prime_x1<-t(x1_mat)%*% x1_mat
-      #################x1 prime x2
-      x1_prime_x2<-t(x1_mat)%*% x2_mat
-      #################x2 prime x2
-      x2_prime_x2<-t(x2_mat)%*% x2_mat
-
-      #########################
-
-
-
-      #x2_prime_x2%*%ginv%*%x2_prime_x2
-      #joint C matrix
-      Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%MASS::ginv(x2_prime_x2)%*%(t(x1_prime_x2))
-      Cmatrix<-round(Cmatrix,digits = 3)
-     # print("Joint C matrix", quote=FALSE)
-      #print(Cmatrix)
-
-
-      #The information matrix for estimating the direct effects of treatments
-      c11<-Cmatrix[c(1:v),c(1:v)]
-      c12<-Cmatrix[c(1:v),c((v+1):(3*v))]
-      c21<-t(c12)
-      c22<-Cmatrix[c((v+1):(3*v)),c((v+1):(3*v))]
-
-      C_tau<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
-      print(round(C_tau,digits = 3))
-      #The information matrix for estimating the left neighbour effects of treatments
-
-      c11<-Cmatrix[c((v+1):(2*v)),c((v+1):(2*v))]
-      c121<-Cmatrix[c((v+1):(2*v)),c((1:v))]
-      c122<-Cmatrix[c((v+1):(2*v)),c((2*v+1):(3*v))]
-      c12<-cbind(c121,c122)
-      c21<-t(c12)
-      c221<-Cmatrix[c(1:v),c(1:v)]
-      c222<-Cmatrix[c(1:v),c(((2*v)+1):(3*v))]
-      c223<-Cmatrix[c(((2*v)+1):(3*v)),c(1:v)]
-      c224<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
-      c225<-cbind(c221,c222)
-      c226<-cbind(c223,c224)
-      c22<-rbind(c225,c226)
-      C_ro<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
-      print(round(C_ro,digits = 3))
-      #The information matrix for estimating the right neighbour effects of treatments
-      c11<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
-      c12<-Cmatrix[c(((2*v)+1):(3*v)),c(1:(2*v))]
-      c21<-t(c12)
-      c22<-Cmatrix[c(1:(2*v)),c(1:(2*v))]
-
-      C_del<-c11-c12%*%MASS::ginv(c22)%*%c21
-      print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
-      print(round(C_del,digits = 3))
-
-    }else{
-      print("Please enter a correct value",quote=FALSE)
+    mat<-matrix(,nrow=0,ncol=v)
+    for(i in x1){
+      x2<-matrix(,nrow=1,ncol=0)
+      x3<-t(seq(0,((i*v)-1), by=i))
+      x2<-cbind(x2,x3)
+      mat<-(rbind((x2),(mat)))
+      i=i+1
     }
+    mat<-(mat%%v+1)
+    matt<-mat
+    c1<-matrix("|",nrow=length(x1),ncol=1)
+    mat<-cbind(mat[,(v)],c1,mat,c1,mat[,1])
+
+    message("PNBBD with left and right border plots")
+    prmatrix(mat,rowlab=rep("",v),collab=rep("",(v)+4), quote = FALSE)
+    cat("\n")
+    b<-p
+
+    #print(c("Number of blocks",b), quote = FALSE)
+    #number_of_replication
+    r<-p
+    #print(c("Number of replications",r), quote = FALSE)
+    #number_of_treatments
+    #print(c("Number of treatments",v), quote = FALSE)
+    # block_size
+    k<-v
+    #print(c("Block size",k), quote = FALSE)
+    #both_side_neighbour_appears
+    u<-1
+    # print(c(" Number of times each treatment appearing as both left and right neighbour to each other treatments",u) ,quote= FALSE)
+    #
+
+    ###########################
+
+    mat1<-matt
+    mat2<-cbind(mat1[,ncol(mat1)],mat1[,c(1:(ncol(mat1)-1))])
+    mat3<-cbind(mat1[,c(2:(ncol(mat1)),1)])
+    ################################
+    incident1<-matrix(0,nrow=length(mat1), ncol=v)
+
+    i=1
+    while(i<=v){
+      x2<-c(which(t(mat1)==i))
+      for(j in x2){
+        incident1[j,i]<-(incident1[j,i]+1)
+      }
+      i=i+1
+    }
+    #
+    #print(incident1)
+    ################################
+    incident2<-matrix(0,nrow=length(mat1), ncol=v)
+    i=1
+    while(i<=v){
+      x2<-c(which(t(mat2)==i))
+      for(j in x2){
+        incident2[j,i]<-incident2[j,i]+1
+      }
+      i=i+1
+    }
+    #
+
+    #print(incident2)
+    ##############################
+    incident3<-matrix(0,nrow=length(mat1), ncol=v)
+    i=1
+    while(i<=v){
+      x2<-c(which(t(mat3)==i))
+      for(j in x2){
+        incident3[j,i]<-incident3[j,i]+1
+      }
+      i=i+1
+    }
+    #
+
+    #print(incident3)
+    #####################################
+    #############################
+    #D_matrix
+
+    k=1
+    d_mat<-matrix(,nrow=0,ncol=b)
+    while(k<=b){
+      xd<-matrix(,nrow=length(mat1[k,]),ncol=0)
+      id<-matrix(0,nrow=length(mat1[k,]),ncol=b)
+      id[,k]=1
+      xd<-id
+      d_mat<-rbind(d_mat,(xd))
+      #print(d_mat)
+
+      k=k+1
+
+    }
+    #d_mat
+    ###################################
+
+    ##################################
+    x1_mat<-cbind(incident1,incident2,incident3)
+    vec1n<-matrix(1,nrow=nrow(incident3),ncol=1)
+    x2_mat<-cbind(vec1n,d_mat)
+    #################x1 prime x1
+    x1_prime_x1<-t(x1_mat)%*% x1_mat
+    #################x1 prime x2
+    x1_prime_x2<-t(x1_mat)%*% x2_mat
+    #################x2 prime x2
+    x2_prime_x2<-t(x2_mat)%*% x2_mat
+
+    #########################
+    #x2_prime_x2%*%ginv%*%x2_prime_x2
+    #joint C matrix
+    Cmatrix<-(x1_prime_x1)-(x1_prime_x2)%*%Moore_penrose_inverse_mine(x2_prime_x2)%*%(t(x1_prime_x2))
+    Cmatrix<-round(Cmatrix,digits = 3)
+    # print("Joint C matrix", quote=FALSE)
+    #print(Cmatrix)
+    #The information matrix for estimating the direct effects of treatments
+    c11<-Cmatrix[c(1:v),c(1:v)]
+    c12<-Cmatrix[c(1:v),c((v+1):(3*v))]
+    c21<-t(c12)
+    c22<-Cmatrix[c((v+1):(3*v)),c((v+1):(3*v))]
+    C_tau<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    # print("The information matrix for estimating the contrast pertaining to the direct effects of treatments", quote=FALSE)
+    #print(round(C_tau,digits = 3))
+    #The information matrix for estimating the left neighbour effects of treatments
+
+    c11<-Cmatrix[c((v+1):(2*v)),c((v+1):(2*v))]
+    c121<-Cmatrix[c((v+1):(2*v)),c((1:v))]
+    c122<-Cmatrix[c((v+1):(2*v)),c((2*v+1):(3*v))]
+    c12<-cbind(c121,c122)
+    c21<-t(c12)
+    c221<-Cmatrix[c(1:v),c(1:v)]
+    c222<-Cmatrix[c(1:v),c(((2*v)+1):(3*v))]
+    c223<-Cmatrix[c(((2*v)+1):(3*v)),c(1:v)]
+    c224<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
+    c225<-cbind(c221,c222)
+    c226<-cbind(c223,c224)
+    c22<-rbind(c225,c226)
+    C_ro<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    #print("The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments", quote=FALSE)
+    #print(round(C_ro,digits = 3))
+    #The information matrix for estimating the right neighbour effects of treatments
+    c11<-Cmatrix[c(((2*v)+1):(3*v)),c(((2*v)+1):(3*v))]
+    c12<-Cmatrix[c(((2*v)+1):(3*v)),c(1:(2*v))]
+    c21<-t(c12)
+    c22<-Cmatrix[c(1:(2*v)),c(1:(2*v))]
+    C_del<-c11-c12%*%Moore_penrose_inverse_mine(c22)%*%c21
+    #print("The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments", quote=FALSE)
+    #print(round(C_del,digits = 3))
+    list1<-list("Number of treatments"=v,"Number of replications"=r,"Number of blocks"=b,"Block size"=k," Number of times each treatment appearing as both left and right neighbour to each other treatments"=u,"The information matrix for estimating the contrast pertaining to the direct effects of treatments"=round(C_tau,digits = 3),"The information matrix for estimating the contrast pertaining to the left neighbour effects of treatments"=round(C_ro,digits = 3),"The information matrix for estimating the contrast pertaining to the right neighbour effects of treatments"=round(C_del,digits = 3))
+    return(list1)
+  }else{
+    print("Please enter a correct value",quote=FALSE)
+  }
 }
+#pnbbd2(7)
 
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 globalVariables(c("drop1","lm","a"))
@@ -1042,6 +1103,3 @@ anlys<-function(data){
 
 
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-
-

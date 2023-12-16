@@ -17,7 +17,7 @@ When v is odd number but not a power of a prime number (v<= 100) , the function 
 }
 \examples{
 library(NBBDesigns)
-nbbd2(9)
+nbbd2(7)
 }
 \references{
 Azais, J.M., Bailey, R.A. and Monod, H. (1993)<DOI: 10.2307/2532269>."A catalogue of efficient neighbour designs with border plots".
