@@ -1,7 +1,7 @@
 Package: NBBDesigns
 Type: Package
 Title: Neighbour Balanced Block Designs (NBBDesigns)
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: c(person("Eldho", "Varghese", email = "eldhoiasri@gmail.com" , role = c( "aut","ctb")),
              person("Ashutosh","Dalal", email = "ashutosh.dalal97@gmail.com", role = c( "aut", "cre")),
              person("Seema", "Jaggi", email = "seema.jaggi@icar.gov.in", role =c( "aut","ctb")),
@@ -13,13 +13,13 @@ License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: True
 Repository: CRAN
-RoxygenNote: 7.2.3
+RoxygenNote: 8.0.0
 Depends: R (>= 3.5.0)
 NeedsCompilation: no
-Packaged: 2023-12-16 14:32:17 UTC; Ashutosh
+Packaged: 2026-09-25 06:05:54 UTC; hp
 Author: Eldho Varghese [aut, ctb],
   Ashutosh Dalal [aut, cre],
   Seema Jaggi [aut, ctb],
   Arpan Bhowmik [aut],
   Cini Varghese [aut]
-Date/Publication: 2023-12-16 14:50:02 UTC
+Date/Publication: 2026-09-25 06:20:02 UTC

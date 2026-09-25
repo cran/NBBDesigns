@@ -21,10 +21,7 @@ sample_data
 }
 
 \examples{
-#To view the sample data set
 library(NBBDesigns)
-sample_data
-#To analyze the sample_data
-anlys(sample_data)
+ sample_data
 }
 

@@ -4,10 +4,20 @@
 \alias{anlys}
 \title{Analysis of  data}
 \usage{
-anlys(data)
+anlys(data, yield, block, treatment, left_neighbour, right_neighbour)
 }
 \arguments{
-\item{data}{The data file should be in csv format. The columns should be named as block,treatment, left_neighbour, right_neighbour and yield as given in the example data set.}
+\item{data}{The data file should be in csv format.}
+
+\item{yield}{Provide yield column name (eg. "Yield").}
+
+\item{block}{Provide the block column name (eg. "block").}
+
+\item{treatment}{Provide the treatment column name (eg. "Trt").}
+
+\item{left_neighbour}{Provide the left_neighbour column name (eg. "Left Neighbour").}
+
+\item{right_neighbour}{Provide the right_neighbour column name (eg. "Right Neighbour").}
 }
 \value{
 It provides the ANOVA table.
@@ -16,11 +26,15 @@ It provides the ANOVA table.
 This function provides the Analysis of Variance (Type III) of the data generated from experiments conducted using a neighbour balanced/partially neighbour balanced block design.
 }
 \examples{
-\dontrun{
 library(NBBDesigns)
-data<-file.choose()
-data<-read.csv(data,header=TRUE,colClasses = c("factor","factor","factor","factor","numeric"))
-fix(data)
-anlys(data)
-}
+sample_data
+
+anlys(
+  data = sample_data,
+  yield = "yield",
+  block = "block",
+  treatment = "treatment",
+  left_neighbour = "left_neighbour",
+  right_neighbour = "right_neighbour"
+)
 }

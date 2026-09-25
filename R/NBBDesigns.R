@@ -1074,31 +1074,56 @@ globalVariables(c("drop1","lm","a"))
 ##Analysis
 #' Analysis of  data
 #'
-#' @param data The data file should be in csv format. The columns should be named as block,treatment, left_neighbour, right_neighbour and yield as given in the example data set.
+#' @param data The data file should be in csv format.
+#' @param yield Provide yield column name (eg. "Yield").
+#'@param block Provide the block column name (eg. "block").
+#'@param treatment Provide the treatment column name (eg. "Trt").
+#'@param left_neighbour Provide the left_neighbour column name (eg. "Left Neighbour").
+#'@param right_neighbour Provide the right_neighbour column name (eg. "Right Neighbour").
 #'@description This function provides the Analysis of Variance (Type III) of the data generated from experiments conducted using a neighbour balanced/partially neighbour balanced block design.
 #' @return It provides the ANOVA table.
 #' @export
 #'@importFrom utils read.csv
 #'@importFrom stats anova
-#'@examples
-#'\dontrun{
-#'library(NBBDesigns)
-#'data<-file.choose()
-#'data<-read.csv(data,header=TRUE,colClasses = c("factor","factor","factor","factor","numeric"))
-#'fix(data)
-#'anlys(data)
-#'}
-anlys<-function(data){
-  model1<-lm(yield~block+treatment+left_neighbour+right_neighbour, data=data)
-  a<-drop1(model1,~.,test = "F")
-  aa<-a[-1,-c(3,4)]
-  c<-anova(model1)
-  b<-c[5,]
-  b<-b[,-3]
-  b<-data.frame(b)
-  colnames(b)<-NULL
-  colnames(b)<-colnames(aa)
-  rbind.data.frame(aa,b)
+#' @examples
+#' library(NBBDesigns)
+#' sample_data
+#'
+#' anlys(
+#'   data = sample_data,
+#'   yield = "yield",
+#'   block = "block",
+#'   treatment = "treatment",
+#'   left_neighbour = "left_neighbour",
+#'   right_neighbour = "right_neighbour"
+#' )
+#' @importFrom stats anova drop1 lm reformulate
+anlys <- function(data, yield, block, treatment,
+                  left_neighbour, right_neighbour) {
+
+  data[[block]] <- as.factor(data[[block]])
+  data[[treatment]] <- as.factor(data[[treatment]])
+  data[[left_neighbour]] <- as.factor(data[[left_neighbour]])
+  data[[right_neighbour]] <- as.factor(data[[right_neighbour]])
+  data[[yield]] <- as.numeric(data[[yield]])
+
+  form <- reformulate(
+    c(block, treatment, left_neighbour, right_neighbour),
+    response = yield
+  )
+
+  model1 <- lm(form, data = data)
+
+  a <- drop1(model1, test = "F")
+  aa <- a[-1, -c(3, 4), drop = FALSE]
+
+  c <- anova(model1)
+  b <- c[5, , drop = FALSE]
+  b <- b[, -3, drop = FALSE]
+
+  colnames(b) <- colnames(aa)
+
+  rbind.data.frame(aa, b)
 }
 
 
